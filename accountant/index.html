@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Accountant</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+
+<body>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>名稱</th>
+                <th>收入</th>
+                <th>支出</th>
+                <th>操作
+                    <button class="btn btn-primary" onclick="create()">新增</button>
+                </th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <script>
+        function search() {
+            document.querySelector("tbody").innerHTML = "";
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "./api/search.php");
+
+            xhr.onload = function () {
+                var balanceTable = JSON.parse(xhr.responseText);
+
+                balanceTable.forEach(balance => {
+                    document.querySelector("tbody").innerHTML += (
+                        `<tr>
+                            <td>${balance.self_name}</td>
+                            <td>${balance.self_debit}</td>
+                            <td>${balance.self_credit}</td>
+                            <td>
+                                <button class="btn btn-warning" onclick="modify(${balance.self_id}, '${balance.self_name}', '${balance.self_debit}', '${balance.self_credit}')">編輯</button>
+                                <button class="btn btn-danger" onclick="remove(${balance.self_id})">刪除</button>
+                            </td>
+                        </tr>`
+                    );
+                });
+            };
+
+            xhr.send();
+        }
+
+        function modify(id, name, debit, credit) {
+            var name = prompt("名稱", name);
+            if (!name) return alert("已取消更新");
+
+            var debit = prompt("收入", debit);
+            if (!debit) return alert("已取消更新");
+
+            var credit = prompt("支出", credit);
+            if (!credit) return alert("已取消更新")
+
+            var xhr = new XMLHttpRequest();
+            var formData = new FormData();
+
+            formData.append("id", id);
+            formData.append("name", name);
+            formData.append("debit", debit);
+            formData.append("credit", credit);
+
+            xhr.open("POST", "./api/update.php");
+            xhr.onload = function() {
+                if (xhr.responseText == 0) alert("更新失敗!");
+                search();
+            };
+            xhr.send(formData);
+        }
+
+        function remove(id) {
+            if (!confirm("確認刪除?")) return;
+
+            var xhr = new XMLHttpRequest();
+
+            xhr.open("GET", "./api/delete.php?id=" + id);
+            xhr.onload = function () {
+                if (xhr.responseText == 0) alert("刪除失敗!");
+                search();
+            };
+            xhr.send();
+        }
+
+        function create() {
+            var name = prompt("名稱");
+            if (!name) return alert("已取消新增");
+
+            var debit = prompt("收入");
+            if (!debit) return alert("已取消新增");
+
+            var credit = prompt("支出");
+            if (!credit) return alert("已取消新增")
+
+            var xhr = new XMLHttpRequest();
+            var formData = new FormData();
+
+            formData.append("name", name);
+            formData.append("debit", debit);
+            formData.append("credit", credit);
+
+            xhr.open("POST", "./api/insert.php");
+            xhr.onload = function () {
+                if (xhr.responseText == 0) alert("新增失敗!");
+                search();
+            };
+            xhr.send(formData);
+        }
+
+        search();
+    </script>
+</body>
+
+</html>
